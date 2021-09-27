@@ -54,10 +54,10 @@ hybrids_floras <- tibble(
   mutate(parent = case_when(
     grepl("^[a-z]", parent) ~ paste(genus, parent),
     grepl("^[A-Z]\\.", parent) ~
-      paste(genus, gsub("^[A-Z]\\.", "", parent)),
+    paste(genus, gsub("^[A-Z]\\.", "", parent)),
     TRUE ~ parent
   )) %>%
-  mutate(parent = ifelse( !grepl(" x |× ", edited, ignore.case = TRUE), NA, parent )) %>%
+  mutate(parent = ifelse(!grepl(" x |× ", edited, ignore.case = TRUE), NA, parent)) %>%
   mutate(parent = ifelse(grepl("× ", parent, ignore.case = TRUE), NA, parent)) %>%
   mutate(parent = ifelse(gsub(" × ", " ", edited) == parent, NA, parent)) %>%
   select(-genus) %>%
