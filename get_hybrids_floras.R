@@ -63,4 +63,5 @@ hybrids_floras <- tibble(
   select(-genus) %>%
   filter(str_count(parent, pattern = " ") > 0 | is.na(parent)) %>%
   ungroup() %>%
+  filter(edited != "Viola × wittrockiana Viola × wittrockiana GAMS") %>%
   write_csv2(here("data/hybrids_floras.csv"))

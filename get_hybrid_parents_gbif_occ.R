@@ -1,4 +1,5 @@
 # Marina Golivets
+# BiCIKL Hackathon (Sept 20-24, 2021, Meise)
 # Clean hybrid names originating from GBIF occurrence data
 # Extract parent taxa
 # Match taxon names to the GBIF taxonomy
@@ -257,7 +258,7 @@ hybrids_gbif_occ_all <- bind_rows(
 
 # match to GBIF -----------------------------------------------------------------------------------------
 
-source(here("r_functions/fn_gbif_matchTaxa.R"))
+source(here("fn_match_names_to_gbif.R"))
 gbif.cmpfn <- compiler::cmpfun(gbif.fn)
 gbif_matched <- gbif.cmpfn(
   taxonName = unique(hybrids_gbif_occ_all$edited),
@@ -316,7 +317,7 @@ hybrids_gbif_occ_all %<>%
   left_join(parent_gbif_matched) %>%
   filter(is.na(usageKey)) %>%
   bind_rows(hybrids_gbif_occ_all_matched) %>%
-  write_csv2(here("data/hybrid_names_from_gbif_occurrences.csv"))
+  write_csv2(here("data/hybrids_gbif_occurrences.csv"))
 
 # hybrids_w_parents <- hybrids_gbif_occ_all %>%
 #   filter(!is.na(parent_scientificName))

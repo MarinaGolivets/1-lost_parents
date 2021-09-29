@@ -1,6 +1,6 @@
 # Marina Golivets
 # BiCIKL Hackathon (Sept 20-24, 2021, Meise)
-# Extract hybrid and parent taxon names from floras
+# Extract hybrid and parent taxon names from EcoFlora
 
 
 # load packages ------------------------------------------------------------------------------------
