@@ -2,7 +2,6 @@
 # BiCIKL Hackathon (Sept 20-24, 2021, Meise)
 # Clean hybrid names originating from GBIF occurrence data
 # Extract parent taxa
-# Match taxon names to the GBIF taxonomy
 
 
 # The list was split into three parts:
@@ -27,8 +26,9 @@ hybrids_gbif_occ1 <- read_table(
   mutate(edited = gsub("\\?|- Festul asc", "", verbatim)) %>%
   mutate(edited = gsub(" ssp\\. ", " subsp. ", edited)) %>%
   mutate(edited = gsub("\\.x |\\.x\\.", ". × ", edited)) %>%
-  mutate(edited = gsub("×| x | X |^X ", " × ", edited)) %>%
+  mutate(edited = gsub("×| x |^x ", " × ", edited, ignore.case = TRUE)) %>%
   mutate(across(edited, ~ str_trim(str_squish(.)))) %>%
+  mutate(edited = gsub("Erigeron xhuelsenii", "Erigeron × huelsenii", edited)) %>%
   rowwise() %>%
   mutate(genus = str_split(edited, pattern = " ", simplify = TRUE)[1]) %>%
   separate(edited, into = c("a", "b"), sep = "=|<=>", remove = FALSE) %>%
@@ -36,20 +36,16 @@ hybrids_gbif_occ1 <- read_table(
   mutate(a = gsub("\\($|\\[$", "", a)) %>%
   mutate(b = gsub("^\\(|\\)$|\\]$", "", b)) %>%
   mutate(across(a:b, ~ str_trim(str_squish(.)))) %>%
+  mutate(b = gsub("c. dioeca × davalliana) Ascherson & Graebner", 
+                  "C. dioeca × davalliana", b)) %>%
   mutate(b = ifelse(
     grepl("^[a-zA-Z]\\.|^× [a-zA-Z]\\.|^× [a-z]+ |^[A-Z] |^[a-zA-Z]{2}\\.", b),
     paste(genus, gsub("^[a-zA-Z]\\.|^× [a-zA-Z]\\.|^× [a-z]+ |^[A-Z] |^[a-zA-Z]{2}\\.", "", b)), b
   )) %>%
   rowwise() %>%
-  mutate(b = ifelse(
-    grepl("× [a-zA-Z]\\.", b), gsub("× [a-zA-Z]\\.", paste("× ", genus), b), b
-  )) %>%
   mutate(b = ifelse(grepl("^[a-z]", b), paste(genus, b), b)) %>%
-  mutate(a = ifelse
-  (grepl("× [a-zA-Z]\\.", a), gsub("× [a-zA-Z]\\.", paste("× ", genus), a), a)) %>%
   mutate(b = gsub("^× ", "", b)) %>%
   mutate(across(a:b, ~ str_trim(str_squish(.)))) %>%
-  rowwise() %>%
   mutate(a_f = str_detect(a, paste(genus, "×"))) %>%
   mutate(b_f = str_detect(b, paste(genus, "×"))) %>%
   mutate(c_f = str_detect(a, "×")) %>%
@@ -60,17 +56,14 @@ hybrids_gbif_occ1 <- read_table(
     b_f == FALSE & a_f == FALSE & c_f == TRUE ~ a,
     b_f == FALSE & a_f == FALSE & d_f == TRUE ~ b
   )) %>%
-  mutate(edited = case_when(
-    a_f == TRUE & b_f == FALSE ~ a,
-    b_f == TRUE & a_f == FALSE ~ b,
-    b_f == FALSE & a_f == FALSE & c_f == FALSE ~ a,
-    b_f == FALSE & a_f == FALSE & d_f == FALSE ~ b
-  )) %>%
-  mutate(edited = ifelse(is.na(edited) & !grepl("×", b), b, edited)) %>%
   mutate(formula = ifelse(is.na(formula) & grepl("×", a), a, formula)) %>%
-  mutate(edited = ifelse(is.na(edited) & !grepl("×", a), a, edited)) %>%
-  mutate(edited = ifelse(formula == "Platanus × hybrida", "Platanus × hybrida", edited)) %>%
-  mutate(formula = ifelse(formula == "Platanus × hybrida", NA, formula)) %>%
+  mutate(formula = case_when(
+    !(formula %in% c("Platanus × hybrida", "Rumex × pratensis M. et K.")) ~ formula)
+    ) %>%
+  select(verbatim, a, b, formula) %>%
+  pivot_longer(a:b, values_to = "edited") %>%
+  select(-name) %>%
+  filter(!is.na(edited)) %>%
   mutate(parent = str_split(formula, pattern = "×")) %>%
   unnest("parent") %>%
   mutate(across(parent, ~ str_trim(str_squish(.)))) %>%
@@ -107,7 +100,7 @@ hybrids_gbif_occ2 <- read_table(here("data/hybridnamesFromOccurences.txt"), col_
 
 # part 3 -------------------------------------------------------------------------------------------
 
-hybrids_gbif_occ3 <- read_csv(here("data/2021-09-23_14-47_hybridnamesUniq2_parents.csv")) %>%
+hybrids_gbif_occ3 <- data.table::fread(here("data/2021-09-23_14-47_hybridnamesUniq2_parents.csv")) %>%
   select(input_strings) %>%
   rename(verbatim = input_strings) %>%
   mutate(edited = str_trim(str_squish(verbatim))) %>%
@@ -148,6 +141,11 @@ hybrids_gbif_occ3 <- read_csv(here("data/2021-09-23_14-47_hybridnamesUniq2_paren
   filter(!grepl(" sp\\.", edited)) %>%
   mutate(edited = gsub(" ssp\\. ", " subsp. ", edited)) %>%
   mutate(edited = gsub(" nssp\\. ", " nothosubsp. ", edited)) %>%
+  mutate(edited = gsub(" subvar\\. × ", " subvar\\. ", edited)) %>%
+  mutate(edited = case_when(
+    verbatim == "Zostera nana subvar. X Zostera marina" ~ "Zostera nana × Zostera marina",
+    TRUE ~ edited
+    )) %>%
   mutate(edited = gsub("\\()", "", edited)) %>%
   mutate(edited = gsub("\\(\\(", "(", edited)) %>%
   mutate(edited = gsub("\\)\\)", ")", edited)) %>%
@@ -248,80 +246,10 @@ hybrids_gbif_occ3 <- read_csv(here("data/2021-09-23_14-47_hybridnamesUniq2_paren
   distinct()
 
 
-# combine -----------------------------------------------------------------------------------------------
+# combine ------------------------------------------------------------------------------------------
 
 hybrids_gbif_occ_all <- bind_rows(
   hybrids_gbif_occ1, hybrids_gbif_occ2, hybrids_gbif_occ3
 ) %>%
-  distinct()
-
-
-# match to GBIF -----------------------------------------------------------------------------------------
-
-source(here("fn_match_names_to_gbif.R"))
-gbif.cmpfn <- compiler::cmpfun(gbif.fn)
-gbif_matched <- gbif.cmpfn(
-  taxonName = unique(hybrids_gbif_occ_all$edited),
-  taxonID = seq_along(unique(hybrids_gbif_occ_all$edited))
-) %>%
-  select(taxonName, confidence, matchType, scientificName, usageKey) %>%
-  rename(edited = taxonName) %>%
-  distinct()
-
-# names with multiple IDs
-gbif_matched %>%
-  select(scientificName, usageKey) %>%
   distinct() %>%
-  count(.$scientificName) %>%
-  filter(n > 1)
-
-# exclude potentially incorrect matches
-gbif_matched %<>%
-  filter(!(
-    grepl(" subsp\\.", scientificName) &
-      !grepl("subsp\\.|var\\.", edited) &
-      matchType == "FUZZY"))
-gbif_matched %<>%
-  filter(!(
-    grepl(" var\\.", scientificName) &
-      !grepl("×", scientificName) &
-      !grepl("var\\.|subsp\\.", edited) &
-      matchType == "FUZZY"))
-
-# match parent taxa
-parent_gbif_matched <- gbif.cmpfn(
-  taxonName = unique(hybrids_gbif_occ_all$parent),
-  taxonID = seq_along(unique(hybrids_gbif_occ_all$parent))
-) %>%
-  select(taxonName, confidence, matchType, scientificName, usageKey) %>%
-  rename_with(~ paste0("parent_", .), .cols = everything()) %>%
-  rename(parent = parent_taxonName) %>%
-  distinct()
-
-# names with multiple IDs
-parent_gbif_matched %>%
-  select(parent_scientificName, parent_usageKey) %>%
-  distinct() %>%
-  count(.$parent_scientificName) %>%
-  filter(n > 1)
-
-hybrids_gbif_occ_all_matched <- hybrids_gbif_occ_all %>%
-  left_join(gbif_matched) %>%
-  left_join(parent_gbif_matched) %>%
-  filter(!is.na(usageKey)) %>%
-  select(-edited, -parent) %>%
-  distinct()
-
-hybrids_gbif_occ_all %<>%
-  left_join(gbif_matched) %>%
-  left_join(parent_gbif_matched) %>%
-  filter(is.na(usageKey)) %>%
-  bind_rows(hybrids_gbif_occ_all_matched) %>%
   write_csv2(here("data/hybrids_gbif_occurrences.csv"))
-
-# hybrids_w_parents <- hybrids_gbif_occ_all %>%
-#   filter(!is.na(parent_scientificName))
-# hybrids_wo_parents <- hybrids_gbif_occ_all %>%
-#   filter(is.na(parent_scientificName)) %>%
-#   filter(!(scientificName %in% hybrids_w_parents$scientificName))
-# hybrids_gbif_occ_all <- bind_rows(hybrids_w_parents, hybrids_wo_parents)
