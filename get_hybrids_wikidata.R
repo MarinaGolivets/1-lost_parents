@@ -55,6 +55,8 @@ w_parents <- hybrids_wiki %>%
 wo_parents <- hybrids_wiki %>%
   filter(is.na(parent)) %>%
   filter(!(verbatim %in% w_parents$verbatim))
-hybrids_wiki <- bind_rows(w_parents, wo_parents)
 
-write_csv2(hybrids_wiki, here("data/hybrids_wikidata.csv"))
+hybrids_wiki <- bind_rows(w_parents, wo_parents) %>%
+  mutate(edited = gsub("×", " × ", verbatim)) %>%
+  mutate(edited = str_trim(str_squish(edited))) %>%
+  write_csv2(here("data/hybrids_wikidata.csv"))
