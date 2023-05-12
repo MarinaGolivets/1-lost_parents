@@ -1,5 +1,4 @@
 # Marina Golivets
-# AlienScenarios WP5
 # Function for standardizing taxon names against GBIF taxonomy
 
 
