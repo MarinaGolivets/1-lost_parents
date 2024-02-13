@@ -40,12 +40,12 @@ for (offset in seq(0, 40000, by = limit)) {
 data.table::setDT(out)
 data.table::setkey(out, speciesKey)
 
-write_csv2(out, here(paste0("output_datasets/checklists_gbif_raw_", lubridate::today(), ".csv")))
+write_csv2(out, here(paste0("output/checklists_gbif_raw_", lubridate::today(), ".csv")))
 
 # get hybrid names from checklists in GBIF ---------------------------------------------------------
 
 gbif_chl0 <- data.table::fread(
-  here("output_datasets/checklists_gbif_raw_2023-05-12.csv")
+  here("output/checklists_gbif_raw_2023-05-12.csv")
 ) %>%
   filter(kingdom == "Plantae" | is.na(kingdom)) %>% # filter out non-plants
   select(scientificName, accepted) %>%
@@ -92,8 +92,7 @@ gbif_chl1 <- bind_rows(
 #     TRUE ~ accepted
 #   ))
 
-gbif_chc
-l2 <- gbif_chl1 %>%
+gbif_chl2 <- gbif_chl1 %>%
   pivot_longer(c(scientificName, accepted), values_to = "verbatim", values_drop_na = TRUE) %>%
   select(-name) %>%
   distinct() %>%
@@ -101,7 +100,7 @@ l2 <- gbif_chl1 %>%
     verbatim,
     edited = str_remove_all(
       verbatim,
-      str_c(c('"', "\\[.*\\]", "\\(\\?\\)|\\?", "_x |_X"), collapse = "|")
+      str_c(c('"', "\\[.*\\]", "\\(\\?\\)|\\?", "_x |_X"," -$"), collapse = "|")
     ) %>%
       str_replace_all(" (?i)x |^(?i)x |×| × ×", " × ") %>%
       str_replace_all("\\((?i)x ", "(× ") %>%
@@ -113,24 +112,29 @@ l2 <- gbif_chl1 %>%
       str_to_sentence()
   ) %>%
   filter(
-    str_detect(edited, "^×[A-Z][a-z]+ [A-Z]|^[A-Za-z]+ × [A-Za-z]+$|^[A-Z][a-z]+ [A-Z]|incl\\.",
+    str_detect(
+      edited, 
+      "^×[A-Z][a-z]+ [A-Z]|^[A-Za-z]+ × [A-Za-z]+$|^[A-Z][a-z]+ [A-Z]|incl\\.|fläcknycklar",
       negate = TRUE
     )
   ) %>%
   distinct()
 
 # match genus names to the GBIF backbone
-genera <- gbif_chl %>%
+genera0 <- gbif_chl2 %>%
   pull(genus) %>%
   unique()
-genera %<>% pbapply::pblapply(rgbif::name_backbone, rank = "genus", cl = cl) %>%
+genera <- genera0 %>% 
+  pbapply::pblapply(rgbif::name_backbone, rank = "genus", cl = cl) %>%
   bind_rows() %>%
   filter(
-    kingdom == "Plantae" | is.na(kingdom),
-    !(verbatim_name %in% c("Green", "Bacillus"))
+    kingdom == "Plantae" | is.na(kingdom) | verbatim_name == "Ammophila",
+    !(verbatim_name %in% c("Green", "Bacillus", "Mörkt", "Yucatan"))
   )
+setdiff(genera0, genera$verbatim_name)
 gbif_chl3 <- gbif_chl2 %>%
-  filter(genus %in% genera$verbatim_name) # remove non-plants
+  filter(genus %in% genera$verbatim_name) %>% # remove non-plants
+  select(-genus)
 
 # clean data further
 gbif_chl4 <- gbif_chl3 %>%
@@ -217,13 +221,13 @@ gbif_chl5 <- gbif_chl4 %>%
     formula = edited,
     parent = str_split(formula, pattern = " × ")
   ) %>%
-  unnest(cols = "parent") %>% # parse hybrid parents from hybrid formulas
+  unnest(cols = "parent") %>% # parse out hybrid parents from hybrid formulas
   mutate(across(everything(), ~ str_squish(.) %>% str_trim())) %>%
   distinct() %>%
   mutate(
     genus = str_extract(formula, "\\w*"),
     parent = str_replace(parent, "^[A-Z]\\.", genus) %>%
-      if_else(str_detect(., "^subsp"), paste(str_extract(formula, "\\w* \\w*"), .), .) %>%
+      if_else(str_detect(., "^subsp |^subsp\\."), paste(str_extract(formula, "\\w* \\w*"), .), .) %>%
       if_else(str_detect(., "^[a-z]"), paste(genus, .), .) %>%
       if_else(str_detect(., " ", negate = TRUE), NA_character_, .)
   ) %>%
@@ -245,7 +249,7 @@ gbif_chl6 <- gbif_chl5 %>%
   ) %>%
   select(-id, -genus) %>%
   mutate(
-    parent = case_when(
+    name = case_when(
       str_detect(formula, "Alcea rosea × rugosa") ~ "Alcea ficifolia",
       str_detect(formula, "Stipa klimesii × S. purpurea s. l.") ~ "Stipa ladakhensis",
       str_detect(formula, "Mentha aquatica L. × spicata subsp. glabrata") ~
@@ -254,9 +258,16 @@ gbif_chl6 <- gbif_chl5 %>%
         "Trichophorum cespitosum subsp. nothofoersteri",
     str_detect(formula, "Sorbus aucuparia × aria") ~ "Sorbus mougeotii",
     str_detect(formula, "Chara hispida × contraria") ~ "Chara papillosa",
-    TRUE ~ parent
+    TRUE ~ name
   )) %>%
   pivot_longer(c(name, formula), values_to = "edited", names_to = "type", values_drop_na = TRUE) %>%
   distinct() %>%
-  mutate(source = "gbif checklists") %>%
-  write_csv2(here("output_datasets/hybrids_gbif_checklists.csv"))
+  mutate(source = "gbif checklists")
+
+names <- gbif_chl6 %>% 
+  filter(type == "name")
+formulas <- gbif_chl6 %>% 
+  filter(type == "formula", !(verbatim %in% names$verbatim))
+gbif_chl7 <- bind_rows(names, formulas) %>%
+  mutate(edited = if_else(type == "name", str_replace(edited, " × ", " ×"), edited)) %>%
+  write_csv2(here("output/hybrids_gbif_checklists.csv"))

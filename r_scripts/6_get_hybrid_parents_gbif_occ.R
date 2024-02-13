@@ -3,22 +3,20 @@
 # Clean hybrid names originating from GBIF occurrence data
 # Extract parent taxa
 
-
 # The list was split into three parts:
 # 1) list of hybrid names + hybrid formulas (with "=")
 # 2) list of hybrid names
 # 3) the rest
 
-
 # part 1 -------------------------------------------------------------------------------------------
-hybrids_gbif_occ1 <- tibble(
+hybr_gbif_occ1 <- tibble(
   verbatim = read_lines(
-    here("input_datasets/hybridnamesWithHybridFormulasFromOccurences.txt")
+    here("input/hybridnamesWithHybridFormulasFromOccurences.txt")
   )
 ) %>%
   mutate(
     edited = str_remove_all(verbatim, "\\?|- Festul asc") %>%
-      str_replace_all(" ssp\\. ", " subsp. ") %>%
+      str_replace_all(" ssp\\.", " subsp. ") %>%
       str_replace_all("\\.x |\\.x\\.", ". × ") %>%
       str_replace_all("×| (?i)x |^(?i)x ", " × ") %>%
       str_squish() %>%
@@ -84,12 +82,12 @@ hybrids_gbif_occ1 <- tibble(
     )
   ) %>%
   select(verbatim, edited, parent) %>%
-  mutate(across(everything(), ~ str_trim(str_squish(.))))
+  mutate(across(everything(), ~ str_squish(.) %>% str_trim()))
 
 # part 2 -------------------------------------------------------------------------------------------
-hybrids_gbif_occ2 <- tibble(
+hybr_gbif_occ2 <- tibble(
   verbatim = read_lines(
-    here("input_datasets/hybridnamesFromOccurences.txt")
+    here("input/hybridnamesFromOccurences.txt")
   )
 ) %>%
   filter(
@@ -112,15 +110,17 @@ hybrids_gbif_occ2 <- tibble(
   mutate(edited = case_when(
     verbatim == "Tripsacum ×maizar-zopilotense-hybrid)" ~ "Tripsacum maizar × zopilotense",
     TRUE ~ edited
-  )) %>%
+  ) %>%
+    str_replace("Salicaceae", "Salix")
+  ) %>%
   filter(
     str_detect(edited, " × [A-Z][a-z]", negate = TRUE),
     str_detect(edited, "× sp\\.$|× hybr\\.$|× L\\.$", negate = TRUE)
   )
 
 # part 3 -------------------------------------------------------------------------------------------
-hybrids_gbif_occ3 <- data.table::fread(
-  here("input_datasets/2021-09-23_14-47_hybridnamesUniq2_parents.csv")
+hybr_gbif_occ3 <- data.table::fread(
+  here("input/2021-09-23_14-47_hybridnamesUniq2_parents.csv")
 ) %>%
   transmute(
     verbatim = input_strings,
@@ -131,7 +131,7 @@ hybrids_gbif_occ3 <- data.table::fread(
     edited %>% str_detect(
       str_c(
         c(" '", "' ", "´", "‘", "’", " cv\\.", " f\\. [A-Z]", " var\\. [A-Z] ", " or ",
-        ".*or possibly", "="),
+        ".*or possibly", "=", "\\) .* \\(", ">"),
         collapse = "|"
       ),
       negate = TRUE
@@ -139,7 +139,7 @@ hybrids_gbif_occ3 <- data.table::fread(
   ) %>%
   mutate(
     edited = edited %>%
-      str_replace_all("× ×|× (?i)x | (?i)x (?i)x ", "×") %>%
+      str_replace_all(" x x |× ×|× (?i)x | (?i)x (?i)x | x\\. | × [A-Z]\\. ", "×") %>%
       str_replace_all(" (?i)x |^(?i)x |×|x_|^(?i)x-", " × ") %>%
       str_remove_all("[0-9]|#|;|&#|N\\/A") %>%
       str_squish() %>%
@@ -149,7 +149,7 @@ hybrids_gbif_occ3 <- data.table::fread(
          c( "^[a-zA-Z]+ceae ", "^[A-Z]+CEAE ",
           "Complex hybrid", "doubled", "sterile triploid", "possible hybrid",
           "autotetraploid", "diploid", "\\(allo", "suggested hybrid", "form A", "form B",
-          "unranked", ".*or possibly"),
+          "unranked", ".*or possibly", " x$"),
           collapse = "|"
         )
       ) %>%
@@ -160,7 +160,8 @@ hybrids_gbif_occ3 <- data.table::fread(
       str_detect(
         str_c(
           c("× \\?$", " × [A-Z][a-z]+ sp\\.", "× unknown$", " unknown species", "indet\\. sp\\.",
-          "<ALL>", "× [a-zA-Z]$", "× [a-zA-Z]\\.$", "× ssp\\.$"),
+          "<ALL>", "× [a-zA-Z]$", "× [a-zA-Z]\\.$", "× ssp\\.$", "× var\\.",
+          "^[A-Z]. ", "Polystichum × Sa.Kuratae", "Loch Valley"),
           collapse = "|"
         ),
         negate = TRUE
@@ -175,10 +176,14 @@ hybrids_gbif_occ3 <- data.table::fread(
     edited,
     c(
       " ssp\\." = " subsp. ",
+      " ssp " = " subsp. ",
       " nssp\\." = " nothosubsp. ",
       " subvar\\. × " = " subvar\\. ",
       "Zostera nana subvar. X Zostera marina" = "Zostera nana × Zostera marina",
-      "-\\)" = ")"
+      "-\\)" = ")",
+      "^abelia" = "Abelia",
+      "Prunus \\(Prunus" = "Prunus",
+      " abies " = " Abies "
     )
   ) %>%
     str_squish() %>%
@@ -203,57 +208,75 @@ hybrids_gbif_occ3 <- data.table::fread(
       "(Agropyron × Elymus ircutensis × Elymus) sp. Alt", "Vanda Josephine Van Brero × TMA",
       "Carex × Spec.", "Rosa cf. × Mill.", "Acer rubrum L. / Acer × freemanii E. Murray",
       "Zygopetalum × Rchb. f.", "Abelai × grandiflora",
-      "Q. faginea faginea × subsp. broteroi (Coutinho) A. Camus"
+      "Q. faginea faginea × subsp. broteroi (Coutinho) A. Camus",
+      "pelargonium × l.h.bailey", "Genus × spec.", "Hemerocallis × Stella de Oro",
+      "Citrus × (L.) Osbeck", "Angustifolia  × L. Latifolia", "Vriesea × E. Morren",
+      "Elymus × [A-Z]", "Rosa canina L. s. l. ( × )", "Vernonia platensis var. × (Vell.) Rusby"
     ))) %>%
-  mutate(edited = case_when(
-    edited == "Aesculus × Carnea" ~ "Aesculus × carnea",
-    edited == "AGATHOSMA CAPENSIS × ARIDA" ~ "Agathosma capensis × arida",
-    edited == "Ambrosia dumosa × AChenopodifolia" ~ "Ambrosia dumosa × chenopodifolia",
-    edited == "Amelanchier × Grandiflora" ~ "Amelanchier × grandiflora",
-    edited == "Amelanchier × Wiegandii" ~ "Amelanchier × wiegandii",
-    edited == "Annona × Atemoya" ~ "Annona × atemoya",
-    edited == "Blechnum × Caudatum" ~ "Blechnum × caudatum",
-    edited == "Blechnum × Confluens" ~ "Blechnum × confluens",
-    edited == "Digitalis obscura × Lanata" ~ "Digitalis obscura × lanata",
-    edited == "Dryopteris goldiana × Intermedia" ~ "Dryopteris goldiana × intermedia",
-    edited == "Erigeron × Flahaultianum" ~ "Erigeron × flahaultianum",
-    edited == "Galium verum × Mollugo" ~ "Galium verum × mollugo",
-    edited == "Galium × Pomeranicum" ~ "Galium × pomeranicum",
-    edited == "Impatiens × Pacifica" ~ "Impatiens × pacifica",
-    edited == "Iris × Barthii" ~ "Iris × barthii",
-    edited == "Mentha × VillosoNervata" ~ "Mentha × villosonervata",
-    edited == "Musa × Paradisiaca" ~ "Musa × paradisiaca",
-    edited == "Nicodemia madagascariensis × Buddleja × pikei" ~
+  mutate(edited = case_match(edited,
+    "Aesculus × Carnea" ~ "Aesculus × carnea",
+    "AGATHOSMA CAPENSIS × ARIDA" ~ "Agathosma capensis × arida",
+    "Ambrosia dumosa × AChenopodifolia" ~ "Ambrosia dumosa × chenopodifolia",
+    "Amelanchier × Grandiflora" ~ "Amelanchier × grandiflora",
+    "Amelanchier × Wiegandii" ~ "Amelanchier × wiegandii",
+    "Annona × Atemoya" ~ "Annona × atemoya",
+    "Blechnum × Caudatum" ~ "Blechnum × caudatum",
+    "Blechnum × Confluens" ~ "Blechnum × confluens",
+    "Digitalis obscura × Lanata" ~ "Digitalis obscura × lanata",
+    "Dryopteris goldiana × Intermedia" ~ "Dryopteris goldiana × intermedia",
+    "Erigeron × Flahaultianum" ~ "Erigeron × flahaultianum",
+    "Galium verum × Mollugo" ~ "Galium verum × mollugo",
+    "Galium × Pomeranicum" ~ "Galium × pomeranicum",
+    "Impatiens × Pacifica" ~ "Impatiens × pacifica",
+    "Iris × Barthii" ~ "Iris × barthii",
+    "Mentha × VillosoNervata" ~ "Mentha × villosonervata",
+    "Musa × Paradisiaca" ~ "Musa × paradisiaca",
+    "Nicodemia madagascariensis × Buddleja × pikei" ~
       "Nicodemia madagascariensis × Buddleja pikei",
-    edited == "Nicotiana × Sanderae" ~ "Nicotiana × sanderae",
-    edited == "Potamogeton gramineus × Illinoensis" ~ "Potamogeton gramineus × illinoensis",
-    edited == "Potamogeton × Fluitans" ~ "Potamogeton × fluitans",
-    edited == "Potentilla arenaria × Tabernaemontani" ~ "Potentilla arenaria × tabernaemontani",
-    edited == "Potentilla Crantzii × Tabernaemontani" ~ "Potentilla crantzii × tabernaemontani",
-    edited == "Potentilla incana × Tabernaemontani" ~ "Potentilla incana × tabernaemontani",
-    edited == "Quercus × Macdonaldii" ~ "Quercus × macdonaldii",
-    edited == "Tilia × Vulgaris" ~ "Tilia × vulgaris",
-    edited == "Inula × Yosezatoana Makino" ~ "Inula × yosezatoana Makino",
-    edited == "Viola × dubia Wiesb. V. reichenbachiana × V. Riviniana" ~ "Viola × dubia Wiesb.",
-    edited == "Viola × multicaulis Jord. (V. alba Bess. × odorata L.)" ~
+    "Nicotiana × Sanderae" ~ "Nicotiana × sanderae",
+    "Potamogeton gramineus × Illinoensis" ~ "Potamogeton gramineus × illinoensis",
+    "Potamogeton × Fluitans" ~ "Potamogeton × fluitans",
+    "Potentilla arenaria × Tabernaemontani" ~ "Potentilla arenaria × tabernaemontani",
+    "Potentilla Crantzii × Tabernaemontani" ~ "Potentilla crantzii × tabernaemontani",
+    "Potentilla incana × Tabernaemontani" ~ "Potentilla incana × tabernaemontani",
+    "Quercus × Macdonaldii" ~ "Quercus × macdonaldii",
+    "Tilia × Vulgaris" ~ "Tilia × vulgaris",
+    "Inula × Yosezatoana Makino" ~ "Inula × yosezatoana Makino",
+    "Viola × dubia Wiesb. V. reichenbachiana × V. Riviniana" ~ "Viola × dubia Wiesb.",
+    "Viola × multicaulis Jord. (V. alba Bess. × odorata L.)" ~
       "Viola × multicaulis Jord.",
-    edited == "× Cistus loreti Rouy et Foucaud C. ladanifero-monspeliensis" ~
+    "× Cistus loreti Rouy et Foucaud C. ladanifero-monspeliensis" ~
       "× Cistus loreti Rouy et Foucaud × C. ladanifero-monspeliensis",
-    edited == "× Senecio telonense Albert S. jacobeae × cineraria" ~ "Senecio telonense Albert",
-    edited ==
+    "× Senecio telonense Albert S. jacobeae × cineraria" ~ "Senecio telonense Albert",
       "(Miltoniopsis roezlii × M. vexillaria) × M. vexillaria) (M. vexillaria × M. roezlii)" ~
       "Miltoniopsis roezlii × M. vexillaria",
-    edited == "(Elymus lanceolatus × Elymus glaucus) Elymus trachycaulus" ~
+    "(Elymus lanceolatus × Elymus glaucus) Elymus trachycaulus" ~
       "Elymus lanceolatus × Elymus glaucus",
-    edited == "vriesea aff. × ruby" ~ "Vriesea aff. × ruby",
-    TRUE ~ edited
+    "vriesea aff. × ruby" ~ "Vriesea aff. × ruby",
+    "Elymus elymus × littoreus" ~ "Elymus × littoreus",
+    "Elymus × littoreus (C.F. Schumach.) Lambinon in D" ~ "Elymus × littoreus (C.F. Schumach.) Lambinon",
+    "Lobelia × L. cardinalis L." ~ "Lobelia × cardinalis L.",
+    "Quercus × Q. ithaburensis subsp. macrolepis" ~ "Quercus × ithaburensis subsp. macrolepis",
+    "Amaranthus × A. tucsonensis Henrickson" ~ "Amaranthus × tucsonensis Henrickson",
+    "Cardamine × C. maxima" ~ "Cardamine × maxima",
+    "Polystichum × Dbicknellii (Christ) Hahne" ~ "Polystichum × bicknellii (Christ) Hahne",
+    "Platanthera × Canbyi (Ames) Luer"  ~"Platanthera × canbyi (Ames) Luer"  ,
+    "Pistacia ×Saportae Buznat" ~"Pistacia ×saportae Buznat" ,
+    "Nuphar × Nuphar rubrodiscum" ~ "Nuphar × rubrodiscum",
+    "Medicago Martyn × varia" ~ "Medicago × varia",
+    "vriesea × brueggemannii matos & crespo" ~ "Vriesea ×brueggemannii Matos & Crespo",
+    "tilia × moltkei L." ~ "Tilia × moltkei L.",
+    "prunus × yedoensis matsum." ~ "Prunus ×yedoensis Matsum.",
+    "Acacia hugelii x a. glauca" ~ "Acacia hugelii × A. glauca",
+    .default = edited
   )) %>%
   mutate(
     edited = edited %>%
       str_replace_all(
         c(
           "XTriticosecale|xTriticosecale" = "× Triticosecale",
-          "^xMiscanthus" = "Miscanthus"
+          "^xMiscanthus" = "Miscanthus",
+          "Pelargonium × P." = "Pelargonium ×"
         )
       ),
     parent = str_split(edited, pattern = "×")
@@ -312,10 +335,27 @@ hybrids_gbif_occ3 <- data.table::fread(
   distinct()
 
 # combine ------------------------------------------------------------------------------------------
-hybrids_gbif_occ_all <- bind_rows(
-  hybrids_gbif_occ1, hybrids_gbif_occ2, hybrids_gbif_occ3
+hybr_gbif_occ_all1 <- bind_rows(
+  hybr_gbif_occ1, hybr_gbif_occ2, hybr_gbif_occ3
 ) %>%
-  distinct() %>%
-  # group_by(verbatim) %>%
-  # filter(n() > 1) %>%
-  write_csv2(here("output_datasets/hybrids_gbif_occurrences.csv"))
+  mutate(
+    type = if_else(str_detect(edited, "^[A-Za-z]+ × |^× "), "name", "formula") %>%
+      if_else(str_detect(edited, "^[A-Za-z]+ × .*×"), "formula", .) %>%
+      if_else(str_detect(edited, "×", negate = TRUE), "name", .),
+    edited = if_else(
+      type == "name", str_replace_all(edited, c(" × " = " ×", "^× " = "×")), edited) %>%
+      str_replace(" × × ", " × "),
+    source = "gbif occurrences",
+    dist = stringdist::stringdist(edited, parent, method = "lv"),
+    parent = ifelse(dist > 3, parent, NA_character_)
+    ) %>%
+  select(-dist) %>%
+  distinct()
+
+names <- hybr_gbif_occ_all1 %>% 
+  filter(type == "name")
+formulas <- hybr_gbif_occ_all1 %>% 
+  filter(type == "formula", !(verbatim %in% names$verbatim))
+hybr_gbif_occ_all2 <- bind_rows(names, formulas) %>%
+  mutate(edited = if_else(type == "name", str_replace(edited, " × ", " ×"), edited)) %>%
+  write_csv2(here("output/hybrids_gbif_occurrences.csv"))
