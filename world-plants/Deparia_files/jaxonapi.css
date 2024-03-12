@@ -1,0 +1,554 @@
+.plantWrap {
+  border-bottom: 1px solid #999;
+  min-height: 330px;
+}
+.plantRow {
+
+  padding-bottom: 15px;
+  margin-bottom: 7px;
+  padding-top: 0px;
+
+}
+.plantRow h2 {
+  margin-bottom: 5px !important;
+}
+
+.plantRow .images img {
+  vertical-align: top;
+  /*
+  width: 190px;
+  max-height: 240px;
+  */
+}
+
+.plantRow .images .otherThumbs div {
+  width: 48% !important;
+}
+
+.mainThumb .badge {
+  background-color: #bf9b00;
+  padding: 10px;
+  position: absolute;
+  right:10px;
+  top: 20px;
+}
+
+.otherThumbs {
+  padding-top: 10px;
+}
+
+.filterPanel {
+  padding: 10px;
+  background-color: #eee;
+  top: 5px;
+  border: 1px solid #aaa;
+  box-shadow: 2px 2px 2px #999;
+  margin-bottom: 10px;
+
+}
+
+.hlBox { background-color: #eee;
+padding: 14px;}
+.oneRow h3 {
+  display: inline-block;
+
+}
+
+.hlBox h2 {
+  margin-bottom: 3px !important;
+}
+
+.filterPanel .link {
+  font-size: 0.9rem;
+  cursor: pointer;
+  color: #999;
+}
+
+.filterPanel .active.link {
+  color: #444 !important;
+    /*transition: background-color 1500ms ease-out 1s;*/
+  animation-name: color_change;
+  animation-duration: 1.4s;
+  animation-iteration-count: 1;
+  animation-direction: alternate;
+    
+}
+
+@keyframes color_change {
+  from { background-color:  #4d9200; }
+  to { background-color: transparent; }
+}
+
+
+.chosen-container .chosen-drop {
+    z-index: 11050 !important;
+}
+.familyBox {
+  background-color: #ddd;
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid #aaa;
+}
+.gefBox {
+  border: 1px solid #999;
+  background-color: #eee;
+  padding: 1px 5px;
+}
+.gefNo0 {
+  color: #ff0007;
+}
+.gefNo1 {
+  color: #942c2f;
+}
+
+.gefNo2 {
+  color: #bf623f;
+}
+
+.gefNo3 {
+  color: #bf9b00;
+}
+.gefNo4 {
+  color: #80a638;
+}
+.gefNo8 {
+  color: #1ca117;
+}
+
+.gefNo20 {
+  color: #bf00a5;
+}
+
+.listAz .family {
+  color: #0b2c89;
+  font-size: 1.2em;
+}
+
+.hidden, .hide {
+  display: none;
+}
+
+h2 {
+  margin-bottom: 5px !important;
+}
+
+h4 {
+  font-size: 1.2em;
+}
+
+.badge {
+  background-color: #eeeeee;
+  border: 1px solid #ddd;
+}
+.autor, .lit{
+  font-weight: normal; !important;
+  color: #888;
+}
+.nameDe {
+  font-size: 1.2em;
+}
+h2.nameLat {
+  margin-bottom: 0px !important;
+}
+
+.brightGrey {
+  font-size: 1.2em !important;
+  border: 1px solid #ccc;
+  background-color: #eeeeee;
+  color: #777;
+  padding: 0 5px;
+  font-size: 0.8em;
+}
+
+.section {
+  padding:3px;
+  background-color: #eeeeee;
+  border-left: 4px solid #aaa;
+  margin-bottom: 0.8em;
+
+}
+.section  .sectionHl {
+  font-weight: bold;
+}
+
+.section h3 {
+  margin:  0px 0px 0px 0px;
+}
+
+.btn {
+  font-size: 0.8em;
+  padding: .175rem .25rem;
+}
+.badge {
+  font-size: 1em;
+}
+
+/*grün*/
+.badge.statusCode-10,
+.badge.statusCode-11
+ {
+  background-color: #c0eb75;
+}
+
+/*rot*/
+.badge.statusCode-20,
+.badge.statusCode-50,
+.badge.statusCode-80 {
+  background-color: #ffc9c9;
+}
+
+/*blau*/
+.badge.statusCode-60,
+.badge.statusCode-61,
+.badge.statusCode-70,
+.badge.statusCode-71{
+  background-color: #bac8ff;
+}
+
+/*gelb*/
+
+.badge.statusCode-12{
+  background-color: #fff780;
+}
+
+.bottomNav {
+/*.back-to-top {*/
+  position: fixed;
+  /*display: none;
+
+   */
+
+  color: #fff;
+  width: 372px;
+  height: 44px;
+  text-align: right;
+
+  font-size: 25px;
+
+  right: 25px;
+  bottom: 15px;
+  transition: background 0.5s;
+  z-index: 11;
+
+}
+.bottomNav .back-to-top{
+
+  background: #18d26e;
+  color: #fff;
+  width: 44px;
+  height: 44px;
+  text-align: center;
+  line-height: 1;
+  font-size: 16px;
+  border-radius: 50%;
+
+  transition: background 0.5s;
+  z-index: 11;
+}
+.back-to-top i {
+  padding-top: 12px;
+  color: #fff;
+}
+
+.colDescription {
+  margin-top: 27px;
+}
+.btnRow {
+  padding: 5px 0px;
+}
+.btnRow a {
+
+  color: #6F9C0C  !important;
+}
+.isDisabled {
+  color: currentColor;
+  cursor: not-allowed;
+  opacity: 0.5;
+  text-decoration: none;
+}
+.overlayBox {
+  color: #fff;
+  margin: -10px 5px;
+  position: absolute; /* Sit on top of the page content */
+  width: auto; /* Full width (cover the whole page) */
+  height: 100%; /* Full height (cover the whole page) */
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0,0,0,0.5); /* Black background with opacity */
+  z-index: 2; /* Specify a stack order in case you're using a different order for other elements */
+}
+.foldOut div.gattungWrap {
+  background-color: #ddd;
+  margin-bottom: 10px;
+}
+span.link {
+  cursor: pointer;
+  -webkit-transition: background-color .5s ease-out;
+  -moz-transition: background-color .5s ease-out;
+  -o-transition: background-color .5s ease-out;
+  transition: background-color .5s ease-out;
+}
+span.link:hover {
+  background-color: #6F9C0C ;
+  color: #fff;
+}
+.searchResult .link {
+  padding: 3px 2px;
+}
+.statusBar {
+
+  padding-left: 10px;
+}
+.clickHover:hover {
+  background-color: #bafdb4
+}
+.clickHover {
+  transition: 0.3s;
+  cursor: pointer;
+
+}
+.clickHover .latName, .latName {
+  color: #007bff;
+}
+
+.searchResult {
+  padding: 5px;
+  margin-bottom: 10px;
+}
+.srarchResult {
+  margin: 20px 10px;
+  padding-bottom: 40px;
+}
+.found {
+  color: #ff2f2f;
+}
+.searchBtn i{
+  color: #6F9C0C  !important;
+    font-size: 16px;
+}
+.searchBtn i:hover{
+  color: #456107 !important;
+}
+#selectBox2_chosen {
+  max-width: 250px;
+}
+
+.infoBox {
+  background-color: #eee;
+  border: 1px solid #aaa;
+  box-shadow: 2px 2px 2px #999;
+  padding: 15px;
+  margin-bottom: 10px;
+}
+.hl1 {
+  font-weight: bold;
+}
+.hlGreen {
+  font-weight: bold !important;
+  color: #6F9C0C !important;
+  font-size: 1.1em !important;
+}
+
+
+#artListWorld {
+  padding-bottom: 3em;
+}
+
+/*
+.type-subspecies {
+  margin-left: 20px;
+}
+
+.type-species {
+  margin-left: 0px;
+  margin-top: 2em;
+}
+
+
+.type-variant {
+  margin-left: 4em;
+}
+.type-form {
+  margin-left: 6em;
+}
+*/
+
+#countryHeadline {
+  margin: auto -0.9em;
+  padding-left: 0.9em;
+  opacity: 0.9;
+
+}
+.devOutput {
+  color: #999;
+}
+
+.author {
+  font-size: 1.4em;
+}
+.latName {
+  font-weight: bold;
+  font-style: italic;
+  font-size: 1.4em;
+  padding-right: 0.1em;
+  
+}
+.latName.blackColor {
+  color: #000 !important;
+}
+.familyInfo .latName ,.familyInfo .latSynonymeName{ font-style: normal !important}
+.latName > span {
+  font-weight: lighter;
+  font-style: normal ;
+}
+
+.type-subspecies .author, .type-variant .author, .type-form .author,
+.type-subspecies .latName, .type-variant .latName, .type-form .latName
+{
+  font-size: 1.2em;
+}
+.type {
+  font-size: 1.2em;
+}
+
+.titleRow {
+  /*
+  text-indent: -2em;
+  padding-left: 4em;
+  */
+
+}
+
+.redText, .redText > .clickHover .latName, .listAz  .genusBox .redText  a {
+  color:#ff3333 !important;
+}
+.isEndemite > .clickHover .latName, .isEndemite > .clickHover a  {
+  color: #167900 !important;
+}
+.greenText {
+  color: #167900 !important;
+}
+.latSynonymeName {
+  font-style: italic;
+}
+.literatur {}
+.conserStatus {
+  color: #a30000;
+}
+.descFld {
+ /* margin-left: 4em;*/
+}
+.descLable {
+  color: #167900;
+}
+.synonyms {
+  margin-left: 2em;
+}
+.distCountry {
+
+  font-weight: bold;
+
+
+}
+.distCountry .small {
+  font-weight: normal !important;
+}
+
+.intent {
+  text-indent: -2em;
+  margin-left: 2em;
+}
+.distroShort {
+  margin-left: 2em;
+}
+.devOutput { display: none}
+.synonymsBox .hint {
+  font-style: italic;
+  display: inline-block;
+}
+.synonymsBox.show .hint {
+  display: none;
+}
+
+.listAz .type-order { margin-left: 0em; }
+.listAz .type-family { margin-left: 2em; }
+.listAz .type-genus { margin-left: 4em; }
+
+.listAz .familyBox, .listAz .familyBox, .listAz .subfamilyBox, .listAz .genusBox, .listAz .tribusBox, .listAz .subtribusBox {
+  /*margin-left: 1.5em;*/
+}
+.listAz .subfamilyTitle {   margin-left: 1em; }
+.listAz .tribusTitle {   margin-left: 2em; }
+.listAz .subtribusTitle {   margin-left: 3em; }
+.listAz .genusTitle {   margin-left: 4em; }
+.listAz .speciesTitle {   margin-left: 5em; }
+
+
+.listAz .orderTitle { font-size: 1.4em}
+.listAz .orderBox { margin-top: 1.5em;}
+
+.imageBox { }
+.listAz .familyBox { margin: 0px; margin-bottom: 1em}
+.listAz .familyTitle { font-size: 1.2em}
+.listAz .latName { font-size: inherit}
+
+#tabMenuWorld {
+
+}
+.listAz .count {
+  font-style: italic;
+  color: #777;
+}
+
+.text-wrap {
+  white-space: normal !important;
+}
+
+.countTable {
+
+  position: relative;
+  border-collapse: collapse;
+}
+
+.countTable td {
+  font-size: 0.9em;
+  padding: 0.4em;
+  white-space: nowrap;
+}
+.countTable tr.headerRow th {
+  background: white;
+  position: sticky;
+  top: 0; /* Don't forget this, required for the stickiness */
+  box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.4);
+}
+
+.countFixWidth {
+  display: inline-block;
+  min-width: 5em;
+  padding-right: 1em;
+}
+.divPadding div {
+  padding-bottom: 0.4em;
+}
+
+
+
+.regionHeadline {
+  background-color: #77aedc;
+  font-size: 1.2em !important;
+}
+
+.subregionHeadline {
+  background-color: #8ebce3;
+  font-size: 1em !important;
+}
+
+.spaceAfter {
+  margin-bottom: 1em;
+}
+
+.countTableWorld {
+  font-size: 1.3em;
+}

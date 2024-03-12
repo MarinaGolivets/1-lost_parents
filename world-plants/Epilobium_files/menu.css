@@ -1,0 +1,100 @@
+@charset "UTF-8";
+/*
+@media (min-width: 576px) { ... }
+
+// Medium devices (tablets, 768px and up)
+@media (min-width: 768px) { ... }
+
+// Large devices (desktops, 992px and up)
+@media (min-width: 992px) { ... }
+
+// Extra large devices (large desktops, 1200px and up)
+@media (min-width: 1200px) { ... }
+*/
+/*
+*
+* ==========================================
+* CUSTOM UTIL CLASSES
+* ==========================================
+*https://bootstrapious.com/p/bootstrap-multilevel-dropdown
+*/
+.dropdown-submenu {
+  position: relative;
+}
+
+/*
+.dropdown-submenu>a:after {
+    content: "\f0da";
+    float: right;
+    border: none;
+    font-family: 'FontAwesome';
+}
+*/
+.dropdown-menu {
+  /*  border: 1px solid #aaaaaa;*/
+}
+
+.dropdown-submenu > .dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: 0px;
+  margin-left: 0px;
+}
+
+.dropdown-item.current {
+  background-color: #28a745;
+  color: #fff;
+}
+
+.dropdown-item.current:hover {
+  background-color: #90e2a3;
+  color: #444;
+}
+
+#navbarContent .dropdown-item.current {
+  background-color: #87a740;
+}
+
+.navbar {
+  /* opacity: 0.9;*/
+}
+
+#navbarContent {
+  border-top: 3px solid #28a745;
+}
+
+#mainNavbarContent {
+  font-size: 1.2em;
+}
+
+body.de-plants #mainNavbarContent {
+  font-size: 1.1em;
+}
+body.de-plants #mainNavbarContent .dropdown-item {
+  padding: 0.25rem 0.6rem;
+}
+
+#metaNav .divider {
+  padding-top: 8px;
+}
+#metaNav .navbar {
+  opacity: 0.9;
+}
+
+.lang-current img {
+  background-color: #ddd;
+  padding: 0px 5px;
+  width: 30px;
+}
+
+/*
+ueber uns
+    stellenangebote 9
+     qualität 7
+     geschichte 8
+
+Leistung
+    Beratun 10
+ */
+
+/*# sourceMappingURL=menu.css.map */
