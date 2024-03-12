@@ -5,26 +5,28 @@
 # Note: Here we reuse the EcoFlora data set was prepared by M. Golivets within a different project
 
 # get hybrid names from EcoFlora -------------------------------------------------------------------
-hybr_ecoflora <- read_csv2(here("input/taxa_ecoflora.csv")) %>%
-  filter(
-    is_hybrid == TRUE, # select only hybrids
-    str_detect(taxon_name, " '| hort\\.|Astilbe x arendsii", negate = TRUE) # remove cultivars
-  ) %>%
+hybr_ecoflora <- read_csv2(here("inputs/taxa_ecoflora.csv")) %>%
+  filter(is_hybrid == TRUE) %>%
   transmute(
     verbatim = taxon_name,
-    type = if_else(str_detect(verbatim, "^[A-Za-z]+ x |^X "), "name", "formula"),
-    edited = str_replace_all(
-      verbatim, c
-      (" x " = " × ", "^X " = "×", "Qercus" = "Quercus", " maueri " = " maureri ")
-    ),
+    type = if_else(str_detect(verbatim, "^[A-Za-z]+ x |^X "), "name", "formula") %>%
+      if_else(verbatim %in% c(
+        "Populus x canadensis 'Serotina' x Populus x jackii",
+        "Populus x jackii x P. nigra"), "formula", .),
+    edited = str_replace_all(verbatim, 
+      c(" x " = " × ", "^X " = "×", "Qercus" = "Quercus", " maueri " = " maureri ")),
     formula = coalesce(hybrid_formula, taxon_name) %>%
       str_replace_all(
-        c("\\." = ". ", "x jackii" = "× jackii", "niedzwetskyana" = "niedzwetzkyana")) %>%
+        c("\\." = ". ", "x jackii" = "× jackii", 
+          "Populus x " = "Populus × ", "niedzwetskyana" = "niedzwetzkyana")) %>%
       if_else(str_detect(., "^[A-Za-z]+ x |^X "), NA_character_, .),
-    parent = str_split(formula, pattern = " x ")
-  ) %>%
+    parent = str_split(formula, pattern = " x "),
+    is_artificial = str_detect(taxon_name, " '| hort\\.|Astilbe x arendsii")
+    ) %>%
+  distinct() %>%
   unnest(cols = "parent") %>% # parse out hybrid parents from hybrid formulas
   mutate(across(everything(), ~ str_squish(.) %>% str_trim())) %>%
+  mutate(parent_seq = seq_along(formula), .by = verbatim) %>%
   mutate(
     genus = str_extract(edited, "\\w*"),
     parent = str_replace(parent, "^[A-Z]\\.", genus) %>%
@@ -34,7 +36,6 @@ hybr_ecoflora <- read_csv2(here("input/taxa_ecoflora.csv")) %>%
     edited3 = str_extract(edited, ".* × \\w*|^× \\w* \\w*") %>%
       if_else(type == "formula", NA_character_, .)
   ) %>%
-  filter(str_detect(edited, "× .* ×", negate = TRUE)) %>%
   select(-genus, -formula) %>%
   mutate(source = "ecoflora") %>%
   distinct() %>%
@@ -52,6 +53,14 @@ wo_parent <- hybr_ecoflora %>%
 hybr_ecoflora <- bind_rows(w_parent, wo_parent)
 rm(w_parent, wo_parent)
 
+formulas <- hybr_ecoflora %>%
+  filter(!is.na(parent)) %>%
+  group_by(edited) %>%
+  summarise(formula = str_c(parent, collapse = " × ")) %>%
+  left_join(select(hybr_ecoflora, edited, type, is_artificial) %>%
+    distinct()) %>%
+  write_csv2(here("outputs/hybrid-formulas_ecoflora.csv"))
+  
 
 # match names to GBIF ------------------------------------------------------------------------------
 gbif_h <- gbif.cmpfn(

@@ -8,8 +8,10 @@
 install.packages("remotes")
 remotes::install_github("barnabywalker/kewr")
 
-pkgs <- c("here", "tidyverse", "magrittr", "janitor", "parallel", "data.table", "foreach")
+pkgs <- c("here", "tidyverse", "magrittr", "janitor", "parallel", 
+          "data.table", "foreach", "stringi", "WorldFlora")
 sapply(pkgs, require, character.only = TRUE)
+
 
 # initialize parallelization -----------------------------------------------------------------------
 no_cores <- parallel::detectCores()

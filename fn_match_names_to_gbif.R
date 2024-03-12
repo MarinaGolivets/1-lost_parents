@@ -2,14 +2,14 @@
 # Function for standardizing taxon names against GBIF taxonomy
 
 
-gbif.fn <- function(taxonName, taxonID) {
+gbif.fn <- function(name, taxon_id, is_strict = TRUE) {
   library(dplyr)
   library(tidyr)
 
   no_cores <- parallel::detectCores()
   cl <- parallel::makeCluster(no_cores)
   all_matches <- pbapply::pblapply(
-    taxonName, rgbif::name_backbone_verbose, kingdom = "plants", strict = TRUE, cl = cl
+    name, rgbif::name_backbone_verbose, kingdom = "plants", strict = is_strict, cl = cl
   )
   parallel::stopCluster(cl)
 
@@ -27,7 +27,7 @@ gbif.fn <- function(taxonName, taxonID) {
     }
   ) %>%
     mapply(cbind, .,
-      taxonName = taxonName, taxonID = taxonID,
+      name = name, taxon_id = taxon_id,
       stringsAsFactors = FALSE, SIMPLIFY = FALSE
     ) %>%
     data.table::rbindlist(fill = TRUE) %>%
@@ -37,7 +37,7 @@ gbif.fn <- function(taxonName, taxonID) {
 
   best_match <- lapply(all_matches, function(x) x$data) %>%
     mapply(cbind, .,
-      taxonName = taxonName, taxonID = taxonID,
+      name = name, taxon_id = taxon_id,
       stringsAsFactors = FALSE, SIMPLIFY = FALSE
     ) %>%
     data.table::rbindlist(fill = TRUE) %>%
@@ -51,7 +51,7 @@ gbif.fn <- function(taxonName, taxonID) {
     altern %>%
       filter(phylum == "Tracheophyta") %>%
       filter(confidence >= 0) %>%
-      filter(taxonID %in% nonmatched$taxonID)
+      filter(taxon_id %in% nonmatched$taxon_id)
   )
   if (class(matched_altern)[1] == "try-error") {
     taxa_gbif <- matched %>%
@@ -62,33 +62,33 @@ gbif.fn <- function(taxonName, taxonID) {
   }
 
   accepted <- taxa_gbif %>%
-    group_by(taxonID) %>%
+    group_by(taxon_id) %>%
     filter(status == "ACCEPTED") %>%
     filter(confidence == max(confidence)) %>%
     ungroup()
 
   synonyms <- taxa_gbif %>%
-    group_by(taxonID) %>%
+    group_by(taxon_id) %>%
     summarise(hasAccept = length(unique(status == "ACCEPTED")) > 1) %>%
     full_join(taxa_gbif) %>%
     filter(hasAccept == FALSE) %>%
     filter(status == "SYNONYM") %>%
-    group_by(taxonID) %>%
+    group_by(taxon_id) %>%
     filter(confidence == max(confidence)) %>%
     ungroup()
 
   doubtful <- taxa_gbif %>%
-    group_by(taxonID) %>%
+    group_by(taxon_id) %>%
     summarise(hasAccept = length(unique(status == "ACCEPTED")) > 1) %>%
     full_join(taxa_gbif) %>%
     filter(hasAccept == FALSE) %>%
-    group_by(taxonID) %>%
+    group_by(taxon_id) %>%
     filter(status == "DOUBTFUL") %>%
     filter(confidence == max(confidence)) %>%
     ungroup()
 
   taxa_gbif_edited <- bind_rows(accepted, synonyms, doubtful) %>%
-    group_by(taxonID) %>%
+    group_by(taxon_id) %>%
     filter(confidence == max(confidence)) %>%
     filter(status != "NONE") %>%
     select(-hasAccept) %>%
